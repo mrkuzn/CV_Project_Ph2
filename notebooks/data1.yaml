@@ -1,0 +1,14 @@
+# Пути к папкам датасета (на Kaggle они будут вести в /kaggle/input/...)
+train: C:/datasets/Face-Detection/images/train
+val: C:/datasets/Face-Detection/images/val
+
+nc: 1
+names:
+  0: face
+
+# Количество классов
+nc: 1
+
+# Имена классов
+names:
+  0: face
