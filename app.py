@@ -2,48 +2,47 @@ import streamlit as st
 import os
 import sys
 
+# Добавляем корень проекта и папку pages в пути поиска Python,
+# чтобы сервер гарантированно видел модули при любом деплое
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 sys.path.append(os.path.join(current_dir, "pages"))
 
-# Инициализация конфигурации страницы 
 st.set_page_config(
-    page_title="CV Project • DetecronTeam", 
-    page_icon="🚀", 
+    page_title="CV Project • DetecronTeam",
+    page_icon="🚀",
     layout="wide"
 )
 
 # --- БЕЗОПАСНЫЙ ИМПОРТ МОДУЛЕЙ КОМАНДЫ ---
-# Импортируем функцию детекции лиц из твоего файла
+# Импорт страницы детекции лиц
 try:
-    from pages.face import render_face_detection_page
+    from face import render_face_detection_page
 except ImportError:
-    # На случай, если структура папок изменится, пробуем импорт напрямую
     try:
-        from face import render_face_detection_page
-    except ImportError:
+        from pages.face import render_face_detection_page
+    except ImportError as e:
         def render_face_detection_page():
-            st.error("Не удалось импортировать модуль `face.py`. Проверьте его наличие в папке `pages/`.")
+            st.error(f"Не удалось импортировать модуль `face.py`. Ошибка: {e}")
 
-# Импортируем функцию детекции ветряков из файла напарника
+# Импорт страницы детекции ветрогенераторов
 try:
-    from pages.wind import render_wind_detection_page
+    from wind import render_wind_detection_page
 except ImportError:
     try:
-        from wind import render_wind_detection_page
-    except ImportError:
+        from pages.wind import render_wind_detection_page
+    except ImportError as e:
         def render_wind_detection_page():
-            st.error("Не удалось импортировать модуль `wind.py`. Проверьте его наличие в папке `pages/`.")
+            st.error(f"Не удалось импортировать модуль `wind.py`. Ошибка: {e}")
 
-# --- ОПРЕДЕЛЕНИЕ СТРУКТУРЫ НАВИГАЦИИ ---
+# --- БОКОВАЯ ПАНЕЛЬ НАВИГАЦИИ ---
 with st.sidebar:
     st.title("🧩 Навигация")
-    # Создаем интерактивное меню переключения страниц
     page = st.radio(
         "Выберите интересующий модуль:",
         [
-            "🏠 Главная страница", 
-            "🎭 Детекция и маскирование лиц", 
+            "🏠 Главная страница",
+            "🎭 Детекция и маскирование лиц",
             "💨 Детекция ветрогенераторов",
             "✳️ Семантическая сегментация аэрокосмических снимков"
         ]
@@ -55,16 +54,13 @@ with st.sidebar:
     st.caption("Совместно: Семантическая сегментация аэрокосмических снимков")
 
 # --- РЕНДЕРИНГ ВЫБРАННОЙ СТРАНИЦЫ ---
-
-# 1. ГЛАВНАЯ СТРАНИЦА ПРИЛОЖЕНИЯ
 if page == "🏠 Главная страница":
     st.title("🚀 Командный проект по Компьютерному Зрению (CV)")
     st.subheader("Веб-сервис искусственного интеллекта DetecronTeam")
-    
-    # Отображение логотипа команды, если он есть в папке images
+
     if os.path.exists("images/logo.jpg"):
-        st.image("images/logo.jpg", width=300, caption="detecron Team Logo")
-        
+        st.image("images/logo.jpg", width=300, caption="DetecronTeam Logo")
+
     st.markdown("""
     ### 👋 Добро пожаловать!
     Данное multipage-приложение представляет собой комплексный аналитический инструмент, объединяющий современные архитектуры глубокого обучения для решения различных прикладных задач Computer Vision.
@@ -77,19 +73,13 @@ if page == "🏠 Главная страница":
     *Используйте боковое меню слева, чтобы переключиться на нужный модуль приложения.*
     """)
 
-# 2. ТВОЯ СТРАНИЦА: ДЕТЕКЦИЯ ЛИЦ
 elif page == "🎭 Детекция и маскирование лиц":
-    # Вызываем твою готовую изолированную функцию из face.py
     render_face_detection_page()
 
-# 3. СТРАНИЦА НАПАРНИКА: ДЕТЕКЦИЯ ВЕТРЯКОВ
 elif page == "💨 Детекция ветрогенераторов":
-    # Вызываем функцию напарника из wind.py
     render_wind_detection_page()
 
-# 4. БОНУСНАЯ СТРАНИЦА: СЕГМЕНТАЦИЯ U-NET
 elif page == "✳️ Семантическая сегментация аэрокосмических снимков":
     st.header("✳️ Семантическая сегментация аэрокосмических снимков")
     st.write("Раздел интеграции модели U-Net.")
-    # Когда напарник напишет код для U-Net, его функцию можно будет импортировать и вызвать здесь аналогично
     st.info("Модуль находится на этапе финальной интеграции.")
