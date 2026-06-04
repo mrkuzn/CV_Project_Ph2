@@ -14,6 +14,15 @@ st.set_page_config(
     layout="wide"
 )
 
+# --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ-ЗАГЛУШКИ ---
+def _missing_face_page():
+    st.error("❌ Модуль `face.py` не найден или не содержит функцию `render_face_detection_page`.\n"
+             "Убедитесь, что файл `face.py` лежит в папке `pages/` и в нём определена указанная функция.")
+
+def _missing_wind_page():
+    st.error("❌ Модуль `wind.py` не найден или не содержит функцию `render_wind_detection_page`.\n"
+             "Убедитесь, что файл `wind.py` лежит в папке `pages/` и в нём определена указанная функция.")
+
 # --- БЕЗОПАСНЫЙ ИМПОРТ МОДУЛЕЙ КОМАНДЫ ---
 # Импорт страницы детекции лиц
 try:
@@ -21,9 +30,8 @@ try:
 except ImportError:
     try:
         from pages.face import render_face_detection_page
-    except ImportError as e:
-        def render_face_detection_page():
-            st.error(f"Не удалось импортировать модуль `face.py`. Ошибка: {e}")
+    except ImportError:
+        render_face_detection_page = _missing_face_page
 
 # Импорт страницы детекции ветрогенераторов
 try:
@@ -31,9 +39,8 @@ try:
 except ImportError:
     try:
         from pages.wind import render_wind_detection_page
-    except ImportError as e:
-        def render_wind_detection_page():
-            st.error(f"Не удалось импортировать модуль `wind.py`. Ошибка: {e}")
+    except ImportError:
+        render_wind_detection_page = _missing_wind_page
 
 # --- БОКОВАЯ ПАНЕЛЬ НАВИГАЦИИ ---
 with st.sidebar:
