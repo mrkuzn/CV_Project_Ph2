@@ -59,7 +59,7 @@ def render_wind_detection_page():
         st.markdown("## ⚙️ Настройки детекции")
         conf_threshold = st.slider(
             "Порог уверенности (Conf)",
-            min_value=0.0, max_value=1.0, value=0.25, step=0.05,
+            min_value=0.0, max_value=1.0, value=0.7, step=0.01,
             help="Минимальная уверенность модели для фиксации объекта."
         )
         iou_threshold = st.slider(
