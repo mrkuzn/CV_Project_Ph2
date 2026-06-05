@@ -22,9 +22,9 @@ def get_project_root():
 PROJECT_ROOT = get_project_root()
 
 def find_weights():
-    """Ищет веса модели yolo_wind.pt."""
+    """Ищет веса модели yolo11m_wind.pt."""
     candidates = [
-        PROJECT_ROOT / "models" / "yolo_wind.pt",
+        PROJECT_ROOT / "models" / "yolo11m_wind.pt",
         PROJECT_ROOT / "models" / "best.pt",
         PROJECT_ROOT / "wind_train" / "exp" / "weights" / "best.pt",
         PROJECT_ROOT / "notebooks" / "wind_train" / "exp" / "weights" / "best.pt",
@@ -52,7 +52,7 @@ def find_image_path(filename):
 # ----------------------------------------------------------------------
 def render_wind_detection_page():
     st.set_page_config(page_title="Детекция ветрогенераторов", layout="wide")
-    st.markdown("# 🌬️ Детекция ветрогенераторов (YOLOv11)")
+    st.markdown("# 🌬️ Детекция ветрогенераторов (YOLOv11m)")
 
     # === БОКОВАЯ ПАНЕЛЬ С НАСТРОЙКАМИ ===
     with st.sidebar:
@@ -64,7 +64,7 @@ def render_wind_detection_page():
         )
         iou_threshold = st.slider(
             "Порог перекрытия рамок (IoU)",
-            min_value=0.0, max_value=1.0, value=0.45, step=0.05,
+            min_value=0.0, max_value=1.0, value=0.7, step=0.01,
             help="Порог для отсечения дублирующихся рамок."
         )
         st.markdown("---")
@@ -73,7 +73,7 @@ def render_wind_detection_page():
     # === ЗАГРУЗКА МОДЕЛИ ===
     weights_path = find_weights()
     if weights_path is None:
-        st.error("❌ Файл весов не найден! Убедитесь, что `models/yolo_wind.pt` существует.")
+        st.error("❌ Файл весов не найден! Убедитесь, что `models/yolo11m_wind.pt` существует.")
         return
 
     @st.cache_resource
@@ -141,8 +141,8 @@ def render_wind_detection_page():
     # === БЛОК МЕТРИК И ГРАФИКОВ (аналогично face.py) ===
     with st.expander("📊 Информация о модели, качестве и процессе обучения (Ветрогенераторы)"):
         st.markdown("""
-        **Метрики обучения YOLOv11 Nano**  
-        * **Число эпох обучения:** 50  
+        **Метрики обучения YOLOv11m**  
+        * **Число эпох обучения:** 100  
         * **Объем выборки:** см. data.yaml (train/valid)  
         """)
 
@@ -160,8 +160,12 @@ def render_wind_detection_page():
 
             st.markdown("""
             **Анализ графиков обучения:**  
-            * **Функции потерь:** box_loss, cls_loss, dfl_loss стабильно снижаются на обеих выборках → нет переобучения.  
-            * **Метрики:** mAP50 и mAP50-95 плавно растут и выходят на плато к концу обучения.
+            - **Функции потерь:** box_loss, cls_loss, dfl_loss плавно снижаются с 0.25 до 0.01, демонстрируя устойчивую сходимость модели без явного переобучения.  
+            - **Метрики:** По данным Precision-Recall кривой, итоговые значения:  
+            - mAP@0.5: **0.826**  
+            - AP для класса `cable tower`: **0.778**  
+            - AP для класса `turbine`: **0.874**  
+            - Precision и Recall на валидации стабилизировались на приемлемом уровне.
             """)
 
         # 2. PR-кривая
@@ -172,7 +176,12 @@ def render_wind_detection_page():
                 st.image(img_path, caption="Precision-Recall Curve", use_container_width=True)
             else:
                 st.info("Файл `images/wind_boxpr_curve.png` ещё не добавлен.")
-            st.markdown("*Кривая близка к правому верхнему углу, что говорит о высоком балансе точности и полноты.*")
+            st.markdown("""
+            **Анализ PR-кривой:**  
+            - Площадь под кривой (AP) для класса `cable tower` = **0.778**, для `turbine` = **0.874**.  
+            - Средний mAP@0.5 по всем классам = **0.826**, что является хорошим показателем для детекции ветрогенераторов.  
+            - Кривая показывает высокую точность (precision) при recall до 0.8, затем плавное снижение – модель уверенно обнаруживает большинство объектов.
+            """)
 
         # 3. Матрица ошибок
         with metric_tabs[2]:
@@ -182,7 +191,13 @@ def render_wind_detection_page():
                 st.image(img_path, caption="Confusion Matrix", use_container_width=True)
             else:
                 st.info("Файл `images/wind_confusion_matrix.png` ещё не добавлен.")
-            st.markdown("*Основная доля ошибок — пропуск мелких или перекрытых объектов.*")
+            st.markdown("""
+            **Анализ матрицы ошибок (нормированной):**  
+            - **cable tower:** правильно распознано **15** объектов, **341** ошибочно принято за `turbine`.  
+            - **turbine:** правильно распознано **1197** объектов, **117** ошибочно принято за `cable tower`.  
+            - **background:** 9 объектов фона ошибочно классифицированы как `cable tower`.  
+            - Основная путаница – между классами «кабельная вышка» и «турбина» из-за визуальной схожести. Высокое количество ложных срабатываний для `cable tower` может быть снижено повышением порога уверенности.
+            """)
 
 # ----------------------------------------------------------------------
 if __name__ == "__main__":
